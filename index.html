@@ -13,6 +13,16 @@
 <body class="bg-black m-0 overflow-hidden font-sans">    <canvas id="glcanvas"></canvas>
     <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
     <script>
+        miniquad_add_plugin({
+        register_plugin: function (importObject) {
+            // This 'env' object is where Rust's extern "C" looks
+            importObject.env.get_gravity_value = function () {
+                const val = parseFloat(window.location.hash.replace("#", ""));
+                return isNaN(val) ? 0.0 : val;
+            };
+        }
+    });
+        
         load("/target/wasm32-unknown-unknown/release/rusty-gravity.wasm");
     </script>
 
@@ -21,7 +31,20 @@
         
         <div class="mb-4">
             <label class="block text-sm mb-1">Gravity Strength</label>
-            <input type="range" id="gravityRange" min="0" max="500" value="100" class="w-full accent-blue-500">
+            <input type="range" id="gravityRange" min="-100" max="100" value="0" class="w-full accent-blue-500">
+
+            <script>
+                const slider = document.getElementById('gravityRange');
+
+                slider.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    // This updates the URL without refreshing the page
+                    window.location.hash = val; 
+                    document.getElementById('gravityRange').innerText = val;
+                });
+
+                
+            </script>
         </div>
 
         <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">

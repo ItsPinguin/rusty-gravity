@@ -6,25 +6,30 @@ struct Body {
     mass: f32,
 }
 
+#[cfg(target_arch = "wasm32")]
+unsafe extern "C" {
+    fn get_gravity_value() -> f32;
+}
+
+
 #[macroquad::main("Gravity Simulation")]
 async fn main() {
     let mut bodies = Vec::new();
-
+    
     // Create a few random particles
     for _ in 0..1000 {
         bodies.push(Body {
             pos: vec2(rand::gen_range(100.0, 1500.0), rand::gen_range(100.0, 900.0)),
             vel: vec2(rand::gen_range(-1.0, 1.0), rand::gen_range(-1.0, 1.0)),
-            mass: rand::gen_range(10.0, 20.0),
+            mass: rand::gen_range(1.0, 10.0),
         });
     }
 
     loop {
-        // Inside the loop in main.rs
-        let mut g_constant = 100.0;
+        // Inside your loop:
+        #[cfg(target_arch = "wasm32")]
+        let g_force = unsafe { get_gravity_value() };
 
-        if is_key_down(KeyCode::Up) { g_constant += 5.0; }
-        if is_key_down(KeyCode::Down) { g_constant -= 5.0; }
         clear_background(BLACK);
         let dt = get_frame_time(); // Get time elapsed (around 0.016s for 60fps)
 
@@ -40,7 +45,7 @@ async fn main() {
                 
                 let dir = p2 - p1;
                 let dist_sq = dir.length_squared().max(100.0); // "Softening" to prevent glitches
-                let force_mag = (g_constant * m2) / dist_sq; // G constant set to 100.0 for visibility
+                let force_mag = (g_force * m2) / dist_sq; // G constant set to 100.0 for visibility
                 let accel = dir.normalize() * force_mag;
                 
                 bodies[i].vel += accel * dt;
@@ -48,7 +53,6 @@ async fn main() {
         }
 
         // --- Update and Draw ---
-        // Inside your update loop, after pos += vel * dt
         for b in bodies.iter_mut() {
             b.pos += b.vel * dt;
         
