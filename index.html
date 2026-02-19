@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Gravity Sim</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style>
+        body { margin: 0; background-color: black; overflow: hidden; }
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="bg-black m-0 overflow-hidden font-sans">    <canvas id="glcanvas"></canvas>
+    <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
+    <script>
+        load("/target/wasm32-unknown-unknown/release/rusty-gravity.wasm");
+    </script>
+
+    <div class="absolute top-5 left-5 z-10 bg-gray-900/80 p-6 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">
+        <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Gravity Controls</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm mb-1">Gravity Strength</label>
+            <input type="range" id="gravityRange" min="0" max="500" value="100" class="w-full accent-blue-500">
+        </div>
+
+        <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
+            Reset Simulation
+        </button>
+
+        <div class="mt-6 text-xs text-gray-400">
+            <p>Built with <span class="text-orange-400">Rust</span> + <span class="text-blue-400">Wasm</span></p>
+        </div>
+    </div>
+</body>
+</html>
