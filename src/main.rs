@@ -11,6 +11,7 @@ unsafe extern "C" {
     fn get_gravity_value() -> f32;
     // fn get_gravity_sign() -> f32;
     fn get_spawning_mass() -> f32;
+    fn should_reset_simulation() -> f32;
 }
 
 
@@ -36,6 +37,20 @@ async fn main() {
         // let g_sign = unsafe { get_gravity_sign() };
         #[cfg(target_arch = "wasm32")]
         let spawning_mass = unsafe { get_spawning_mass() };
+        #[cfg(target_arch = "wasm32")]
+        let should_reset = unsafe { should_reset_simulation() };
+
+        if should_reset == 1.0 {
+            bodies = Vec::new();
+
+            for _ in 0..1000 {
+                bodies.push(Body {
+                pos: vec2(rand::gen_range(100.0, 1500.0), rand::gen_range(100.0, 900.0)),
+                vel: vec2(rand::gen_range(1.0, 5.0), rand::gen_range(-1.0, 1.0)),
+                mass: rand::gen_range(1.0, 2.0)
+            });
+    }
+        }
 
         clear_background(BLACK);
         let dt = get_frame_time(); // Get time elapsed (around 0.016s for 60fps)
@@ -62,7 +77,7 @@ async fn main() {
                     bodies[kept_body].mass += bodies[might_remove].mass * 0.5;
                     bodies[might_remove].mass *= 0.5;
 
-                    if bodies[might_remove].mass < 1.0 {
+                    if bodies[might_remove].mass.abs() < 1.0 {
                         bodies[kept_body].mass += bodies[might_remove].mass;
                         to_remove.push(might_remove);
                     }
@@ -129,7 +144,7 @@ async fn main() {
             draw_line(sx, sy, ex, ey, 2.0, WHITE);
         }
 
-        draw_text(&format!("FPS: {}", get_fps()), 20.0, 20.0, 20.0, GREEN);
+        // draw_text(&format!("FPS: {}", get_fps()), 20.0, 20.0, 20.0, GREEN);
         // draw_text(&format!("g_s: {}", g_sign), 200.0, 20.0, 20.0, GREEN);
         next_frame().await
     }
