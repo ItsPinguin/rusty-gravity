@@ -14,40 +14,87 @@
     <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
     <script>
         miniquad_add_plugin({
-        register_plugin: function (importObject) {
-            // This 'env' object is where Rust's extern "C" looks
-            importObject.env.get_gravity_value = function () {
-                const val = parseFloat(window.location.hash.replace("#", ""));
-                return isNaN(val) ? 0.0 : val;
-            };
-        }
-    });
+            register_plugin: function (importObject) {
+                // This 'env' object is where Rust's extern "C" looks
+                importObject.env.get_gravity_value = function () {
+                    const val = parseFloat(document.getElementById("gravityRange").value);
+                    return isNaN(val) ? 0.0 : val;
+                };
+                importObject.env.get_spawning_mass = function () {
+                    const val = parseFloat(document.getElementById("mRange").value);
+                    return isNaN(val) ? 0.0 : val;
+                };
+                // importObject.env.get_gravity_sign = function () {
+                //     const val = (document.getElementById("gSignBox").checked);
+                //     return isNaN(val) ? 1.0 : val ? 1.0 : -1.0;
+                // };
+            }
+        });
         
         load("/target/wasm32-unknown-unknown/release/rusty-gravity.wasm");
     </script>
 
     <div class="absolute top-5 left-5 z-10 bg-gray-900/80 p-6 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">
         <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Gravity Controls</h2>
-        
-        <div class="mb-4">
-            <label class="block text-sm mb-1">Gravity Strength</label>
-            <input type="range" id="gravityRange" min="-100" max="100" value="0" class="w-full accent-blue-500">
+        <details class="mb-2 cursor-pointer" open>
+            <summary>Initial Conditions</summary>
 
-            <script>
-                const slider = document.getElementById('gravityRange');
+            <div class="mb-2 flex flex-row gap-4 justify-between w-full">
+                <label id="gLabel" class="block text-sm mb-1">Gravity Strength</label>
+                <input type="number" id="gravityRange" min="-100" max="100" value="0" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
 
-                slider.addEventListener('input', (e) => {
-                    const val = e.target.value;
-                    // This updates the URL without refreshing the page
-                    window.location.hash = val; 
-                    document.getElementById('gravityRange').innerText = val;
-                });
 
+                <script>
+                    // const slider = document.getElementById('gravityRange');
+
+                    // slider.addEventListener('input', (e) => {
+                    //     const val = e.target.value;
+                    //     document.getElementById('gLabel').innerText = "Gravity Strength: " + val;
+                    // });
+
+
+                </script>
+            </div>
+        </details>
+
+        <details class="mb-2 cursor-pointer" open>
+            <summary>New bodies</summary>
+            
+            <!-- <div class="flex flex-row justify-start align-center gap-2">
                 
-            </script>
-        </div>
+                <input type="checkbox" id="gSignBox" class="accent-blue-500" name="gSignBox" checked>
+                <label for="gSignBox" id="gSignLabel" class="block text-sm mb-1">Inverse gravity</label>
+                <script>
+                    const checked = document.getElementById('gSignBox');
+                    checked.addEventListener('input', (e) => {
+                        console.log(checked.checked)
+                    })
+                </script>
+            </div> -->
 
-        <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
+            <div class="mb-2 flex flex-row gap-4 justify-between w-full">
+                <label id="mRangeLabel" class="block text-sm mb-1">Mass</label>
+                <input type="number" id="mRange" min="-1000" max="1000" value="10" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
+
+                <script>
+
+                    // const massSlider = document.getElementById('mRange');
+
+                    // massSlider.addEventListener('input', (e) => {
+                    //     const val = e.target.value;
+                    //     document.getElementById('mRangeLabel').innerText = "Mass: " + val;
+                    // });
+
+
+                </script>
+            </div>
+        </details>
+
+        
+
+        
+
+        <button onclick="location.reload()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
             Reset Simulation
         </button>
 
