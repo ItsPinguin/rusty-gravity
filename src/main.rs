@@ -44,22 +44,46 @@ async fn main() {
 
         // --- Physics Logic ---
         // We use a simple O(N^2) loop to calculate gravity between all pairs
+        let mut to_remove = Vec::new();
+
         for i in 0..bodies.len() {
             for j in 0..bodies.len() {
-                if i == j { continue; }
-                
                 let p1 = bodies[i].pos;
                 let p2 = bodies[j].pos;
                 let m1 = bodies[i].mass;
                 let m2 = bodies[j].mass;
-                
-                let dir = p2 - p1;
-                let dist_sq = dir.length_squared().max(100.0); // "Softening" to prevent glitches
-                let force_mag = (g_force * (m1 / m1.abs()) * m2) / (dist_sq + 0.001); // G constant set to 100.0 for visibility
-                let accel = dir.normalize() * force_mag;
-                
-                bodies[i].vel += accel * dt;
+                if i == j { continue; }
+
+                if ((m1 / 3.14).sqrt() + (m2 / 3.14).sqrt()) >= (p1 - p2).length() && m1.signum() == m2.signum() {
+                    let kept_body = if m1 >= m2 {i} else {j};
+                    let might_remove = if kept_body != i {i} else {j};
+
+                    bodies[kept_body].vel = (bodies[kept_body].vel * bodies[kept_body].mass 
+                        + bodies[might_remove].vel * bodies[might_remove].mass * 0.5) 
+                        / (bodies[kept_body].mass + bodies[might_remove].mass * 0.5);
+                    bodies[kept_body].mass += bodies[might_remove].mass * 0.5;
+                    bodies[might_remove].mass *= 0.5;
+
+                    if bodies[might_remove].mass < 1.0 {
+                        bodies[kept_body].mass += bodies[might_remove].mass;
+                        to_remove.push(might_remove);
+                    }
+                        
+                } else {
+                    
+                    let dir = p2 - p1;
+                    let dist_sq = dir.length_squared().max(100.0); // "Softening" to prevent glitches
+                    let force_mag = (g_force * (m1 / m1.abs()) * m2) / (dist_sq + 0.001); // G constant set to 100.0 for visibility
+                    let accel = dir.normalize() * force_mag;
+                    
+                    bodies[i].vel += accel * dt;
+                }
             }
+        }
+        to_remove.sort();
+        to_remove.dedup();
+        for &idx in to_remove.iter().rev() {
+            bodies.remove(idx);
         }
 
         // --- Update and Draw ---
@@ -76,7 +100,7 @@ async fn main() {
             // Low 't' = more Blue, High 't' = more Red
             let color = Color::new(t, 0.2, 1.0 - t, 1.0);
         
-            draw_circle(b.pos.x, b.pos.y, b.mass / 10.0, color);
+            draw_circle(b.pos.x, b.pos.y, (b.mass / 3.14).sqrt(), color);
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
