@@ -6,9 +6,9 @@ pub trait Particle {
     fn get_mass(&self) -> f32;
     fn get_vel(&self) -> Vec2;          // Added
     fn set_vel(&mut self, vel: Vec2);   // Added
-    fn add_mass(&mut self, mass: f32);  // Added
+    fn set_mass(&mut self, mass: f32);  // Added
     
-    fn react_to_other(&mut self, other: &dyn Particle, g_force: f32, dt: f32) -> i8;
+    fn react_to_other(&mut self, other: &mut dyn Particle, g_force: f32, dt: f32) -> i8;
     fn update(&mut self, dt: f32);
     fn draw(&self);
     fn get_snapshot(&self) -> (Vec2, f32, Vec2, &str);

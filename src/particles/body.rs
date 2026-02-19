@@ -16,86 +16,95 @@ impl Particle for Body {
         return "body"
     }
 
-    fn react_to_other(&mut self, other: &dyn Particle, g_force: f32, dt: f32) -> i8 {
-        let p1 = self.pos;
-        let p2 = other.get_pos();
-        let m1 = self.mass;
-        let m2 = other.get_mass();
-
-        // 1. Check for Collision/Fusion
-        let radius_sum = ((m1.abs() / 3.14).sqrt() + (m2.abs() / 3.14).sqrt()) * 0.8;
-        if (p1 - p2).length() < radius_sum && m1.signum() == m2.signum() {
-            if m1 >= m2 {
-                // Self is the "winner". We calculate new velocity.
-                // Note: We can only change OURSELF here. 
-                // We return '2' to tell the main loop to kill 'other'.
-                let combined_mass = m1 + m2;
-                self.vel = (self.vel * m1 + other.get_vel() * m2) / combined_mass;
-                self.mass = combined_mass;
-                return 2
-            }
-            return 0
-        } 
-
-        // 2. Standard Gravity
-        let dir = p2 - p1;
-        let dist_sq = dir.length_squared().max(100.0);
-        let force_mag = (g_force * m1.signum() * m2) / (dist_sq + 0.001);
-        let accel = dir.normalize() * force_mag;
-        
-        // We modify OUR velocity
-        self.vel += accel * dt;
-        0
-    }
-
-    // fn react_to_other(&mut self, other: &dyn Particle, dt: f32) -> i8 {
+    // fn react_to_other(&mut self, other: &dyn Particle, g_force: f32, dt: f32) -> i8 {
     //     let p1 = self.pos;
     //     let p2 = other.get_pos();
     //     let m1 = self.mass;
     //     let m2 = other.get_mass();
 
-    //     if other.get_type() != self.get_type() {
-    //         return 0
-    //     }
-
-    //     if ((m1 / 3.14).sqrt() + (m2 / 3.14).sqrt()) * 0.8 >= (p1 - p2).length() && m1.signum() == m2.signum() {
-    //         let kept_body : &mut Body = if m1 >= m2 {self} else {other};
-    //         let might_remove : &dyn Particle = if m1 < m2 {self} else {other};
-
-    //         kept_body.vel = (kept_body.vel * kept_body.mass 
-    //             + might_remove.vel * might_remove.mass * 0.5) 
-    //             / (kept_body.mass + might_remove.mass * 0.5);
-    //         kept_body.mass += might_remove.mass * 0.5;
-    //         might_remove.mass *= 0.5;
-
-    //         if might_remove.mass.abs() < 1.0 {
-    //             kept_body.mass += kept_body.mass;
-    //             return 2;
-    //         } else {
-    //             return 0
+    //     // 1. Check for Collision/Fusion
+    //     let radius_sum = ((m1.abs() / 3.14).sqrt() + (m2.abs() / 3.14).sqrt()) * 0.8;
+    //     if (p1 - p2).length() < radius_sum && m1.signum() == m2.signum() {
+    //         if m1 >= m2 {
+    //             // Self is the "winner". We calculate new velocity.
+    //             // Note: We can only change OURSELF here. 
+    //             // We return '2' to tell the main loop to kill 'other'.
+    //             let combined_mass = m1 + m2;
+    //             self.vel = (self.vel * m1 + other.get_vel() * m2) / combined_mass;
+    //             self.mass = combined_mass;
+    //             return 2
     //         }
-                
-    //     } else {
-            
-    //         let dir = p2 - p1;
-    //         let dist_sq = dir.length_squared().max(100.0); // "Softening" to prevent glitches
-    //         let force_mag = (g_force * (m1 / m1.abs()) * m2) / (dist_sq + 0.001); // G constant set to 100.0 for visibility
-    //         let accel = dir.normalize() * force_mag;
-            
-    //         bodies[i].vel += accel * dt;
     //         return 0
-    //     }
+    //     } 
+
+    //     // 2. Standard Gravity
+    //     let dir = p2 - p1;
+    //     let dist_sq = dir.length_squared().max(100.0);
+    //     let force_mag = (g_force * m1.signum() * m2) / (dist_sq + 0.001);
+    //     let accel = dir.normalize() * force_mag;
+        
+    //     // We modify OUR velocity
+    //     self.vel += accel * dt;
+    //     0
     // }
+
+    fn react_to_other(&mut self, other: &mut dyn Particle, g_force: f32, dt: f32) -> i8 {
+        let p1 = self.pos;
+        let p2 = other.get_pos();
+        let m1 = self.mass;
+        let m2 = other.get_mass();
+
+        if (other.get_type() == self.get_type() && ((m1 / 3.14).sqrt() + (m2 / 3.14).sqrt()) * 0.8 >= (p1 - p2).length() && m1.signum() == m2.signum()) {
+            // let kept_body : &mut dyn Particle = if m1 >= m2 {self} else {other};
+            // let might_remove : &mut dyn Particle = if m1 < m2 {self} else {other};
+            let (kept_body, might_remove) = if m1 >= m2 {
+                (self as &mut dyn Particle, other)
+            } else {
+                (other, self as &mut dyn Particle)
+            };
+
+            kept_body.set_vel((kept_body.get_vel() * kept_body.get_mass() 
+                + might_remove.get_vel() * might_remove.get_mass() * 0.5) 
+                / (kept_body.get_mass() + might_remove.get_mass() * 0.5)
+            );
+            kept_body.set_mass(kept_body.get_mass() + might_remove.get_mass() * 0.5);
+            might_remove.set_mass(might_remove.get_mass() * 0.5);
+
+            if might_remove.get_mass().abs() < 1.0 {
+                kept_body.set_mass(kept_body.get_mass() + might_remove.get_mass());
+                return if m1 >= m2 {2} else {1};
+            } else {
+                return 0
+            }
+                
+        } else {
+            
+            let dir = p2 - p1;
+            let dist_sq = dir.length_squared().max(100.0); // "Softening" to prevent glitches
+            let force_mag = (g_force * (m1 / m1.abs()) * m2) / (dist_sq + 0.001); // G constant set to 100.0 for visibility
+            let accel = dir.normalize() * force_mag;
+            
+            self.vel += accel * dt;
+            return 0
+        }
+    }
 
     fn update(&mut self, dt: f32) {
         self.pos += self.vel * dt;
     }
 
     fn draw(&self) {
+        // 1. Calculate speed
         let speed = self.vel.length();
+    
+        // 2. Map speed to a 0.0 - 1.0 range (Adjust 200.0 based on your sim's scale)
         let t = (speed / 200.0).clamp(0.0, 1.0);
+    
+        // 3. Create a color: Blue (slow) to Red (fast)
+        // Low 't' = more Blue, High 't' = more Red
         let color = Color::new(t, 0.2, 1.0 - t, 1.0);
-        draw_circle(self.pos.x, self.pos.y, self.mass / 10.0, color);
+    
+        draw_circle(self.pos.x, self.pos.y, (self.mass / 3.14).sqrt(), color);
     }
 
     // Must declare return types!
@@ -107,8 +116,8 @@ impl Particle for Body {
         self.mass
     }
 
-    fn add_mass(&mut self, mass: f32) {
-        self.mass += mass
+    fn set_mass(&mut self, mass: f32) {
+        self.mass = mass
     }
     fn get_vel(&self) -> Vec2 {
         return self.vel;
