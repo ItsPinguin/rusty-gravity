@@ -3,8 +3,7 @@ use macroquad::prelude::*;
 struct Body {
     pos: Vec2,
     vel: Vec2,
-    mass: f32,
-    sign: f32
+    mass: f32
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -23,9 +22,8 @@ async fn main() {
     for _ in 0..1000 {
         bodies.push(Body {
             pos: vec2(rand::gen_range(100.0, 1500.0), rand::gen_range(100.0, 900.0)),
-            vel: vec2(rand::gen_range(-1.0, 1.0), rand::gen_range(-1.0, 1.0)),
-            mass: rand::gen_range(-10.0, 10.0),
-            sign: 1.0
+            vel: vec2(rand::gen_range(1.0, 5.0), rand::gen_range(-1.0, 1.0)),
+            mass: rand::gen_range(1.0, 2.0)
         });
     }
     let mut drag_start = None;
@@ -54,7 +52,7 @@ async fn main() {
                 let m2 = bodies[j].mass;
                 if i == j { continue; }
 
-                if ((m1 / 3.14).sqrt() + (m2 / 3.14).sqrt()) >= (p1 - p2).length() && m1.signum() == m2.signum() {
+                if ((m1 / 3.14).sqrt() + (m2 / 3.14).sqrt()) * 0.8 >= (p1 - p2).length() && m1.signum() == m2.signum() {
                     let kept_body = if m1 >= m2 {i} else {j};
                     let might_remove = if kept_body != i {i} else {j};
 
@@ -118,9 +116,8 @@ async fn main() {
                 bodies.push(Body {
                     pos: vec2(sx, sy),
                     vel: initial_vel,
-                    mass: spawning_mass,
+                    mass: spawning_mass
                     // sign: g_sign
-                    sign: 1.0
                 });
                 drag_start = None;
             }
