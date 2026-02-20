@@ -4,18 +4,118 @@
     <meta charset="utf-8">
     <title>Gravity Sim</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        function setTab(tabName) {
+            console.log("Setting tab to", tabName)
+            document.querySelectorAll('[tabname]').forEach (elt =>{
+                const tab = elt.getAttribute("tabname")
+                elt.classList.toggle('hidden', tabName !== tab);
+            })
 
+            document.querySelectorAll('[tab-button]').forEach (button => {
+                const clicked = button.getAttribute('tab-button') === tabName;
+                button.classList.toggle('bg-stone-700', clicked);
+                button.classList.toggle('bg-stone-800', !clicked);
+                console.log(clicked, button)
+            })
+            // document.getElementById('panel-sim').classList.toggle('hidden', tabName !== 'sim');
+            // document.getElementById('panel-tools').classList.toggle('hidden', tabName !== 'tools');
+            // Update border colors for active tab...
+        }
+    </script>
     <style>
-        body { margin: 0; background-color: black; overflow: hidden; }
-        canvas { width: 100%; height: 100%; }
     </style>
 </head>
-<body class="bg-black m-0 overflow-hidden font-sans">    <canvas id="glcanvas"></canvas>
+<body class="overflow-hidden bg-black m-0 font-sans bg-mauve-950 h-screen select-none">
+    <div class="flex flex-row justify-between h-full w-screen bg-stone-900">
+        <div class="p-2 z-10 h-full">
+            <div class="z-10 bg-stone-900 rounded-xl border border-stone-700 text-stone-200  w-64 xl:w-72 h-full backdrop-blur-sm">
+                <div class="flex flex-row h-full">
+                    <div class="flex flex-col gap-2 border-r border-stone-700 p-2">
+                        <div onclick="setTab('tool1')" tab-button="tool1" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer
+                        flex items-center justify-center">
+                            +
+                        </div>
+                        <div onclick="setTab('tool2')" tab-button="tool2" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer">
+                        </div>
+                        <div onclick="setTab('tool3')" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer">
+                        </div>
+                    </div>
+                    <div class="w-full">
+                        <details class="mb-2 cursor-pointer w-full hidden" open tabname="tool1">
+                            <summary class="flex items-center mb-2">
+                                <div class="flex-grow border-t border-stone-700"></div>
+                            
+                                <span class="mx-2 flex-shrink-0 text-xs font-bold uppercase tracking-widest text-blue-400">
+                                    New bodies
+                                </span>
+                            
+                                <div class="flex-grow border-t border-stone-700"></div>
+                            </summary>
+
+                            <div class="mb-2 flex flex-row gap-4 justify-between w-full">
+                                <label id="mRangeLabel" class="block text-sm mb-1 text-gray-400">Mass</label>
+                                <input type="number" id="mRange" min="-1000" max="1000" value="10" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+        <div class="flex-grow relative p-2">
+            <canvas id="glcanvas" class="rounded-lg bg-black w-full h-full border"></canvas>
+        </div>
+
+        <div class="p-2 z-10 h-full">
+            <div class="z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">Simulation & Explorer
+                <details class="mb-2 cursor-pointer" open>
+                    <summary class="flex items-center mb-2">
+                        <div class="flex-grow border-t border-gray-700"></div>
+                    
+                        <span class="mx-2 flex-shrink-0 text-xs font-bold uppercase tracking-widest text-blue-400">
+                            Simulation Properties
+                        </span>
+                    
+                        <div class="flex-grow border-t border-gray-700"></div>
+                    </summary>
+
+                    <div class="mb-2 flex flex-row gap-4 justify-between w-full">
+                        <label id="gLabel" class="block text-sm text-gray-400 mb-1">Gravity Strength</label>
+                        <input type="number" id="gravityRange" min="-10000" max="10000" value="0" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
+                    </div>
+                </details>
+                <button onclick="requestReset()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
+                    Reset Simulation
+                </button>
+            </div>
+        </div>
+        
+    <!-- 
+        <div class="absolute bottom-4 left-4 z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Gravity Controls</h2>
+
+
+
+
+            <button onclick="requestReset()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
+                Reset Simulation
+            </button>
+
+            <div class="mt-6 text-xs text-gray-400">
+                <p>Built with <span class="text-orange-400">Rust</span> + <span class="text-blue-400">Wasm</span></p>
+            </div>
+        </div> -->
+    </div>
+
     <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
     <script>
         miniquad_add_plugin({
             register_plugin: function (importObject) {
                 // This 'env' object is where Rust's extern "C" looks
+                importObject.env = importObject.env || {};
+                
                 importObject.env.get_gravity_value = function () {
                     const val = parseFloat(document.getElementById("gravityRange").value);
                     return isNaN(val) ? 0.0 : val;
@@ -37,87 +137,8 @@
                 // };
             }
         });
-
         function requestReset() { window.resetRequested = true; }
-        
         load("/target/wasm32-unknown-unknown/release/rusty-gravity.wasm");
     </script>
-
-    <div class="absolute top-2 left-2 z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">Tools
-        <div class="flex flex-row">
-            <div class="flex flex-col gap-2">
-                <input type="checkbox" class="bg-gray-500 w-4 h-4">
-                <input type="checkbox" checked>
-                <input type="checkbox">
-                <input type="checkbox" checked>
-                <input type="checkbox">
-                <input type="checkbox" checked>
-                <input type="checkbox">
-            </div>
-            <details class="mb-2 cursor-pointer" open>
-                <summary class="flex items-center mb-2">
-                    <div class="flex-grow border-t border-gray-700"></div>
-                
-                    <span class="mx-2 flex-shrink-0 text-xs font-bold uppercase tracking-widest text-blue-400">
-                        New bodies
-                    </span>
-                
-                    <div class="flex-grow border-t border-gray-700"></div>
-                </summary>
-            
-                <!-- <div class="flex flex-row justify-start align-center gap-2">
-
-                    <input type="checkbox" id="gSignBox" class="accent-blue-500" name="gSignBox" checked>
-                    <label for="gSignBox" id="gSignLabel" class="block text-sm mb-1">Inverse gravity</label>
-                    <script>
-                        const checked = document.getElementById('gSignBox');
-                        checked.addEventListener('input', (e) => {
-                            console.log(checked.checked)
-                        })
-                    </script>
-                </div> -->
-
-                <div class="mb-2 flex flex-row gap-4 justify-between w-full">
-                    <label id="mRangeLabel" class="block text-sm mb-1 text-gray-400">Mass</label>
-                    <input type="number" id="mRange" min="-1000" max="1000" value="10" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
-                </div>
-            </details>
-        </div>
-        
-    </div>
-
-    <div class="absolute top-2 right-2 z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">Simulation & Explorer
-        <details class="mb-2 cursor-pointer" open>
-            <summary class="flex items-center mb-2">
-                <div class="flex-grow border-t border-gray-700"></div>
-    
-                <span class="mx-2 flex-shrink-0 text-xs font-bold uppercase tracking-widest text-blue-400">
-                    Simulation Properties
-                </span>
-    
-                <div class="flex-grow border-t border-gray-700"></div>
-            </summary>
-
-            <div class="mb-2 flex flex-row gap-4 justify-between w-full">
-                <label id="gLabel" class="block text-sm text-gray-400 mb-1">Gravity Strength</label>
-                <input type="number" id="gravityRange" min="-10000" max="10000" value="0" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
-            </div>
-        </details>
-    </div>
-
-    <div class="absolute bottom-4 left-4 z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">
-        <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Gravity Controls</h2>
-        
-
-        
-
-        <button onclick="requestReset()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
-            Reset Simulation
-        </button>
-
-        <div class="mt-6 text-xs text-gray-400">
-            <p>Built with <span class="text-orange-400">Rust</span> + <span class="text-blue-400">Wasm</span></p>
-        </div>
-    </div>
 </body>
 </html>
