@@ -17,10 +17,10 @@ impl Tool for PlaceTool {
     
     fn on_drag(&mut self, _start: Vec2, _current: Vec2, _view: &mut ViewState) {}
 
-    fn on_release(&mut self, start: Vec2, end: Vec2, bodies: &mut Vec<Box<dyn Particle>>, _view: &mut ViewState, mass: f32) {
+    fn on_release(&mut self, start: Vec2, end: Vec2, bodies: &mut Vec<Box<dyn Particle>>, view: &mut ViewState, mass: f32) {
         let initial_vel = (start - end) * 0.5;
         bodies.push(Box::new(Body {
-            pos: start,
+            pos: start - view.offset,
             vel: initial_vel,
             mass,
         }));
