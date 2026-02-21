@@ -28,12 +28,32 @@
             active_tool = tool
             console.log('tool is now', active_tool)
         }
+
+        window.draggable = {}
+        function startDragging(elt) {
+            window.draggable[elt.getAttribute('[draggable-input]')] = Date.now()
+        }
+
+        function endDragging(elt) {
+            previous = window.draggable[elt.getAttribute('[draggable-input]')]
+        }
     </script>
     <style>
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="overflow-hidden bg-black m-0 font-sans bg-mauve-950 h-screen select-none">
-    <div class="flex flex-row justify-between h-full w-screen bg-stone-900">
+    <!-- MAIN APP LAYOUT -->
+    <div class="flex flex-row justify-between h-full w-screen bg-linear-to-t from-stone-950 to-stone-900">
+        <!-- LEFT PANEL -->
         <div class="p-2 z-10 h-full">
             <div class="z-10 bg-stone-900 rounded-xl border border-stone-700 text-stone-200  w-64 xl:w-72 h-full backdrop-blur-sm">
                 <div class="flex flex-row h-full">
@@ -49,11 +69,38 @@
                         flex items-center justify-center">
                             +
                         </div>
-                        <div onclick="setTab(this);setTool(2)" tab-group="tools" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer"></div>
+                        <div onclick="setTab(this);setTool(2)" tab-group="tools" tab-button="simulation" 
+                        class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer
+                        flex items-center justify-center">
+                            %
+                        </div>
                     </div>
                     <!-- TOOLS CONTAINER -->
                     <div class="w-full">
-                        <details class="mb-2 cursor-pointer w-full hidden" open tab-group="tools" tab-panel="add">
+                        
+                        <div class="w-full h-full p-2" tab-group="tools" tab-panel="move">
+                            <p class="text-white text-md mb-2">Move and zoom</p>
+                            <div class="mb-1 flex flex-row gap-4 justify-between w-full">
+                                <p class="text-gray-400 text-sm">View X</p>
+                                <input id="view-x" type="number" id="mRange" min="-1000" max="1000" value="0.0" class="focus:bg-stone-800 text-sm bg-stone-700 rounded-sm px-1 w-1/2 text-right outline-none">
+                            </div>
+                            <div class="mb-1 flex flex-row gap-4 justify-between w-full">
+                                <p class="text-gray-400 text-sm">View Y</p>
+                                <input id="view-y" type="number" id="mRange" min="-1000" max="1000" value="0.0" class="focus:bg-stone-800 text-sm bg-stone-700 rounded-sm px-1 w-1/2 text-right outline-none">
+                            </div>
+                            <div class="mb-2 flex flex-row gap-4 justify-between w-full">
+                                <p class="text-gray-400 text-sm">Zoom</p>
+                                <input id="view-zoom" type="number" id="mRange" min="1" max="1000" value="1.0" class="focus:bg-stone-800 text-sm bg-stone-700 rounded-sm px-1 w-1/2 text-right outline-none">
+                            </div>
+                        </div>
+                        <div class="w-full h-full p-2" tab-group="tools" tab-panel="add">
+                            <p class="text-white text-md mb-2">Add Body</p>
+                            <div class="mb-1 flex flex-row gap-4 justify-between w-full">
+                                <p class="text-gray-400 text-sm">Mass</p>
+                                <input type="number" id="mRange" min="-1000" max="1000" value="10" class="focus:bg-stone-800 text-sm bg-stone-700 rounded-sm px-1 w-1/2 text-right outline-none">
+                            </div>
+                        </div>
+                        <details hidden class="mb-2 cursor-pointer w-full hidden" open tab-group="tools" tab-panel="add">
                             <summary class="flex items-center mb-2">
                                 <div class="flex-grow border-t border-stone-700"></div>
                             
@@ -69,18 +116,29 @@
                                 <input type="number" id="mRange" min="-1000" max="1000" value="10" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
                             </div>
                         </details>
-                        <div class="" tab-group="tools" tab-panel="move">MOVE AROUND</div>
+                        <div class="w-full h-full p-2" tab-group="tools" tab-panel="simulation">
+                            <p class="text-white text-md mb-2">Simulation</p>
+                            <div class="mb-1 flex flex-row gap-4 justify-between w-full">
+                                <p class="text-gray-400 text-sm">Gravity</p>
+                                <input id="gravityRange" type="number" id="mRange" min="-1000" max="1000" value="0.0" class="focus:bg-stone-800 text-sm bg-stone-700 rounded-sm px-1 w-1/2 text-right outline-none">
+                            </div>
+                            <button onclick="requestReset()" class="mt-2 w-full bg-stone-700 hover:bg-stone-600 py-2 rounded-sm transition text-sm">
+                                Reset Simulation
+                            </button>
+
+                        </div>
                     </div>
                 </div>
 
 
             </div>
         </div>
+        <!-- CANVAS -->
         <div class="flex-grow relative p-2">
             <canvas id="glcanvas" class="rounded-lg bg-black w-full h-full border"></canvas>
         </div>
-
-        <div class="p-2 z-10 h-full">
+        <!-- RIGHT PANEL -->
+        <div hidden class="p-2 z-10 h-full">
             <div class="z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">Simulation & Explorer
                 <details class="mb-2 cursor-pointer" open>
                     <summary class="flex items-center mb-2">
@@ -98,27 +156,8 @@
                         <input type="number" id="gravityRange" min="-10000" max="10000" value="0" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
                     </div>
                 </details>
-                <button onclick="requestReset()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
-                    Reset Simulation
-                </button>
             </div>
         </div>
-        
-    <!-- 
-        <div class="absolute bottom-4 left-4 z-10 bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-white w-64 backdrop-blur-md">
-            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Gravity Controls</h2>
-
-
-
-
-            <button onclick="requestReset()" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 py-2 rounded-lg transition font-semibold">
-                Reset Simulation
-            </button>
-
-            <div class="mt-6 text-xs text-gray-400">
-                <p>Built with <span class="text-orange-400">Rust</span> + <span class="text-blue-400">Wasm</span></p>
-            </div>
-        </div> -->
     </div>
 
     <script src="https://not-fl3.github.io/miniquad-samples/mq_js_bundle.js"></script>
@@ -146,10 +185,22 @@
                 importObject.env.get_active_tool = function () { 
                     return active_tool
                 }
+
+                importObject.env.update_ui_view_pos = function(x, y, zoom) {
+                    console.log('test', x, y, zoom)
+                    document.getElementById('view-x').value = x.toFixed(2);
+                    document.getElementById('view-y').value = y.toFixed(2);
+                    document.getElementById('view-zoom').value = zoom.toFixed(2);
+                };
             }
         });
         function requestReset() { window.resetRequested = true; }
         load("/target/wasm32-unknown-unknown/release/rusty-gravity.wasm");
+
+        
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
     </script>
 </body>
 </html>
