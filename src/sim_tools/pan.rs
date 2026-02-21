@@ -25,7 +25,6 @@ impl Tool for PanTool {
 
     fn on_release(&mut self, _start: Vec2, _end: Vec2, _bodies: &mut Vec<Box<dyn Particle>>, _view: &mut ViewState, _mass: f32) {}
 
-    fn draw_preview(&self, start: Vec2, current: Vec2, _view: &ViewState) {
-        draw_line(start.x, start.y, current.x, current.y, 2.0, WHITE);
+    fn draw_preview(&self, _start: Vec2, _current: Vec2, _view: &ViewState) {
     }
 }
