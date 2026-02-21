@@ -1,19 +1,16 @@
 use macroquad::prelude::*;
 use crate::particles::{Particle, Body};
+use crate::ViewState;
 
 pub trait Tool {
-    // Called when mouse is pressed
-    fn on_click(&mut self, pos: Vec2, bodies: &mut Vec<Box<dyn Particle>>);
-    
-    // Called while mouse is held down
-    fn on_drag(&mut self, start: Vec2, current: Vec2);
-    
-    // Called when mouse is released
-    fn on_release(&mut self, start: Vec2, end: Vec2, bodies: &mut Vec<Box<dyn Particle>>, mass: f32);
-
-    // Optional: Draw a preview (like the line or a ghost planet)
-    fn draw_preview(&self, start: Vec2, current: Vec2);
+    fn on_click(&mut self, pos: Vec2, bodies: &mut Vec<Box<dyn Particle>>, view: &mut ViewState);
+    fn on_drag(&mut self, start: Vec2, current: Vec2, view: &mut ViewState);
+    fn on_release(&mut self, start: Vec2, end: Vec2, bodies: &mut Vec<Box<dyn Particle>>, view: &mut ViewState, mass: f32);
+    fn draw_preview(&self, start: Vec2, current: Vec2, view: &ViewState);
 }
 
-pub mod placement_tool;
-pub use placement_tool::PlacementTool;
+pub mod place;
+pub use place::PlaceTool;
+
+pub mod pan;
+pub use pan::PanTool;

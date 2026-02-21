@@ -1,4 +1,4 @@
-use crate::Vec2;
+use crate::{Vec2, ViewState};
 
 pub trait Particle {
     fn get_type(&self) -> &str; // Changed to &self (no need for &mut)
@@ -10,7 +10,7 @@ pub trait Particle {
     
     fn react_to_other(&mut self, other: &mut dyn Particle, g_force: f32, dt: f32) -> i8;
     fn update(&mut self, dt: f32);
-    fn draw(&self);
+    fn draw(&self, view_state: &ViewState);
 }
 
 pub mod body;

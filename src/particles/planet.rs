@@ -1,4 +1,4 @@
-use crate::Vec2;
+use crate::{Vec2, ViewState};
 use macroquad::prelude::*;
 use crate::particles::Particle;
 
@@ -50,7 +50,7 @@ impl Particle for Planet {
         self.pos += self.vel * dt;
     }
 
-    fn draw(&self) {
+    fn draw(&self, _view_state: &ViewState) {
         draw_circle(self.pos.x, self.pos.y, 10.0, PURPLE);
         draw_circle_lines(self.pos.x, self.pos.y, 15.0, 2.0, WHITE);
     }

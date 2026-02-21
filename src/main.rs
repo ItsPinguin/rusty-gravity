@@ -4,7 +4,7 @@ use particles::{Particle, Body};
 mod physics;
 use physics::*;
 mod sim_tools;
-use sim_tools::{Tool, PlacementTool};
+use sim_tools::{Tool, PlaceTool, PanTool};
 
 #[cfg(target_arch = "wasm32")]
 unsafe extern "C" {
@@ -19,9 +19,13 @@ unsafe extern "C" {
 #[macroquad::main("Gravity Simulation")]
 async fn main() {
     let mut bodies : Vec<Box<dyn Particle>> = Vec::new();
+    let mut view_state = ViewState {
+        offset: vec2(0.0, 0.0),
+        zoom: 1.0
+    };
 
     let previous_tool_id = 0;
-    let mut active_tool: Box<dyn Tool> = Box::new(PlacementTool::new());
+    let mut active_tool: Box<dyn Tool> = Box::new(PanTool::new());
     let mut drag_start: Option<Vec2> = None;
     
     // Create a few random particles
@@ -52,8 +56,8 @@ async fn main() {
         };
         if previous_tool_id != tool_id {
             match tool_id {
-                0 => {active_tool = Box::new(PlacementTool::new());},
-                1 => {active_tool = Box::new(PlacementTool::new());},
+                0 => {active_tool = Box::new(PanTool::new());},
+                1 => {active_tool = Box::new(PlaceTool::new());},
                 _ => {}
             }
         }
@@ -80,34 +84,39 @@ async fn main() {
         // --- Update and Draw ---
         for b in bodies.iter_mut() {
             b.update(dt);
-            b.draw();
+            b.draw(&view_state);
         }
 
         let mouse_pos = mouse_position().into();
 
         if is_mouse_button_pressed(MouseButton::Left) {
             drag_start = Some(mouse_pos);
-            active_tool.on_click(mouse_pos, &mut bodies);
+            active_tool.on_click(mouse_pos, &mut bodies, &mut view_state);
         }
 
         if is_mouse_button_down(MouseButton::Left) {
             if let Some(start) = drag_start {
-                active_tool.on_drag(start, mouse_pos);
+                active_tool.on_drag(start, mouse_pos, &mut view_state);
             }
         }
 
         if is_mouse_button_released(MouseButton::Left) {
             if let Some(start) = drag_start {
-                active_tool.on_release(start, mouse_pos, &mut bodies, spawning_mass);
+                active_tool.on_release(start, mouse_pos, &mut bodies, &mut view_state, spawning_mass);
                 drag_start = None;
             }
         }
 
         // Drawing
         if let Some(start) = drag_start {
-            active_tool.draw_preview(start, mouse_pos);
+            active_tool.draw_preview(start, mouse_pos, &view_state);
         }
 
         next_frame().await
     }
+}
+
+pub struct ViewState {
+    pub offset: Vec2,
+    pub zoom: f32,
 }
