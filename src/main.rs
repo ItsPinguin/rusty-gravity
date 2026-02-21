@@ -1,6 +1,10 @@
 use macroquad::prelude::*;
 mod particles;
-use particles::{Particle, Planet, Body};
+use particles::{Particle, Body};
+mod physics;
+use physics::*;
+mod sim_tools;
+use sim_tools::{Tool, PlacementTool};
 
 #[cfg(target_arch = "wasm32")]
 unsafe extern "C" {
@@ -8,12 +12,16 @@ unsafe extern "C" {
     // fn get_gravity_sign() -> f32;
     fn get_spawning_mass() -> f32;
     fn should_reset_simulation() -> f32;
+    fn get_active_tool() -> i32;
 }
 
 
 #[macroquad::main("Gravity Simulation")]
 async fn main() {
     let mut bodies : Vec<Box<dyn Particle>> = Vec::new();
+
+    let mut active_tool: Box<dyn Tool> = Box::new(PlacementTool::new());
+    let mut drag_start: Option<Vec2> = None;
     
     // Create a few random particles
     for _ in 0..1000 {
@@ -35,9 +43,12 @@ async fn main() {
         let spawning_mass = unsafe { get_spawning_mass() };
         #[cfg(target_arch = "wasm32")]
         let should_reset = unsafe { should_reset_simulation() };
-        unsafe {
-
-        }
+        // let tool_id = unsafe { 
+        //     #[cfg(target_arch = "wasm32")]
+        //     { get_active_tool() }
+        //     #[cfg(not(target_arch = "wasm32"))]
+        //     { 0 } // Default for desktop testing
+        // };
         if should_reset == 1.0 {
             bodies = Vec::new();
 
@@ -55,58 +66,42 @@ async fn main() {
 
         // --- Physics Logic ---
         // We use a simple O(N^2) loop to calculate gravity between all pairs
-        let mut to_remove = Vec::new();
+        tick_physics(&mut bodies, g_force, dt);
 
-        for i in 0..bodies.len() {
-            for j in 0..bodies.len() {
-                if i == j { continue; }
+        // let mut to_remove = Vec::new();
+
+        // for i in 0..bodies.len() {
+        //     for j in 0..bodies.len() {
+        //         if i == j { continue; }
 
 
-                let signal = if i < j {
-                    let (left, right) = bodies.split_at_mut(j);
-                    let b_i = &mut *left[i];
-                    let b_j = &mut *right[0];
-                    b_i.react_to_other(b_j, g_force, dt)
-                } else {
-                    let (left, right) = bodies.split_at_mut(i);
-                    let b_j = &mut *left[j];
-                    let b_i = &mut *right[0];
-                    b_i.react_to_other(b_j, g_force, dt)
-                };
-            
-                // if signal == 2 {
-                //     to_remove.push(j);
-                // }
-
-                // let the_way = i < j;
-                // let (left, right) = if the_way {bodies.split_at_mut(j)} else {bodies.split_at_mut(i)};
-                // let body_i = if the_way {&mut*left[i]} else {&mut*right[0]};
-                // let body_j = if the_way {&mut*right[0]} else {&mut*left[j]};
-
-                // let other_snapshot = bodies[j].get_snapshot();
-                // let other = ParticleProxy { 
-                //     pos: other_snapshot.0,
-                //     mass: other_snapshot.1,
-                //     vel: other_snapshot.2,
-                //     p_type: other_snapshot.3.to_string(),
-                //     };
-                // let signal = body_i.react_to_other(body_j, g_force, dt);
-                if signal == 1 || signal == 3 {
-                    to_remove.push(i);
-                }
-                if signal == 2 || signal == 3 {
-                    to_remove.push(j);
-                }
-                // bodies[j] = to_delete.1
-            }
-        }
-        to_remove.sort();
-        to_remove.dedup();
-        for &idx in to_remove.iter().rev() {
-            if idx < bodies.len() {
-                bodies.remove(idx);
-            }
-        }
+        //         let signal = if i < j {
+        //             let (left, right) = bodies.split_at_mut(j);
+        //             let b_i = &mut *left[i];
+        //             let b_j = &mut *right[0];
+        //             b_i.react_to_other(b_j, g_force, dt)
+        //         } else {
+        //             let (left, right) = bodies.split_at_mut(i);
+        //             let b_j = &mut *left[j];
+        //             let b_i = &mut *right[0];
+        //             b_i.react_to_other(b_j, g_force, dt)
+        //         };
+        //         if signal == 1 || signal == 3 {
+        //             to_remove.push(i);
+        //         }
+        //         if signal == 2 || signal == 3 {
+        //             to_remove.push(j);
+        //         }
+        //         // bodies[j] = to_delete.1
+        //     }
+        // }
+        // to_remove.sort();
+        // to_remove.dedup();
+        // for &idx in to_remove.iter().rev() {
+        //     if idx < bodies.len() {
+        //         bodies.remove(idx);
+        //     }
+        // }
 
         // --- Update and Draw ---
         for b in bodies.iter_mut() {
@@ -114,6 +109,7 @@ async fn main() {
         
             b.draw();
         }
+
 
         if is_mouse_button_pressed(MouseButton::Left) {
             drag_start = Some(mouse_position());

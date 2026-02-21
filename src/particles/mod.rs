@@ -11,14 +11,6 @@ pub trait Particle {
     fn react_to_other(&mut self, other: &mut dyn Particle, g_force: f32, dt: f32) -> i8;
     fn update(&mut self, dt: f32);
     fn draw(&self);
-    fn get_snapshot(&self) -> (Vec2, f32, Vec2, &str);
-}
-
-pub struct ParticleProxy {
-    pub pos: Vec2,
-    pub mass: f32,
-    pub vel: Vec2,
-    pub p_type: String,
 }
 
 pub mod body;

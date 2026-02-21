@@ -23,8 +23,9 @@
             })
         }
 
+        let active_tool = 0
         function setTool(tool) {
-            window.tool = tool
+            active_tool = tool
         }
     </script>
     <style>
@@ -37,17 +38,17 @@
                 <div class="flex flex-row h-full">
                     <!-- BUTTON CONTAINER -->
                     <div class="flex flex-col gap-2 border-r border-stone-700 p-2">
-                        <div onclick="setTab(this)" tab-group="tools" tab-button="move" 
+                        <div onclick="setTab(this);setTool(0)" tab-group="tools" tab-button="move" 
                         class="bg-stone-700 hover:bg-stone-700 size-8 rounded-md cursor-pointer
                         flex items-center justify-center">
                             x
                         </div>
-                        <div onclick="setTab(this)" tab-group="tools" tab-button="add" 
+                        <div onclick="setTab(this);setTool(1)" tab-group="tools" tab-button="add" 
                         class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer
                         flex items-center justify-center">
                             +
                         </div>
-                        <div onclick="setTab(this)" tab-group="tools" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer"></div>
+                        <div onclick="setTab(this);setTool(2)" tab-group="tools" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer"></div>
                     </div>
                     <!-- TOOLS CONTAINER -->
                     <div class="w-full">
@@ -142,7 +143,7 @@
                     return 0.0;
                 };
                 importObject.env.get_active_tool = function () { 
-                    return window.tool || 'move'
+                    return active_tool
                 }
             }
         });

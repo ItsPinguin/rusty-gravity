@@ -1,4 +1,4 @@
-use crate::{Vec2, particles::ParticleProxy};
+use crate::{Vec2};
 use macroquad::prelude::*;
 use crate::particles::Particle;
 
@@ -9,9 +9,6 @@ pub struct Body {
 }
 
 impl Particle for Body {
-    fn get_snapshot(&self) -> (Vec2, f32, Vec2, &str) {
-        return (self.pos, self.mass, self.vel, self.get_type())
-    }
     fn get_type(&self) -> &str {
         return "body"
     }

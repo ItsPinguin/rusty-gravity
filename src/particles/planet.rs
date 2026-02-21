@@ -9,9 +9,6 @@ pub struct Planet {
 }
 
 impl Particle for Planet {
-    fn get_snapshot(&self) -> (Vec2, f32, Vec2, &str) {
-        return (self.pos, self.mass, self.vel, self.get_type())
-    }
 
     fn get_type(&self) -> &str {
         return "planet"
