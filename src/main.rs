@@ -20,6 +20,7 @@ unsafe extern "C" {
 async fn main() {
     let mut bodies : Vec<Box<dyn Particle>> = Vec::new();
 
+    let previous_tool_id = 0;
     let mut active_tool: Box<dyn Tool> = Box::new(PlacementTool::new());
     let mut drag_start: Option<Vec2> = None;
     
@@ -43,12 +44,20 @@ async fn main() {
         let spawning_mass = unsafe { get_spawning_mass() };
         #[cfg(target_arch = "wasm32")]
         let should_reset = unsafe { should_reset_simulation() };
-        // let tool_id = unsafe { 
-        //     #[cfg(target_arch = "wasm32")]
-        //     { get_active_tool() }
-        //     #[cfg(not(target_arch = "wasm32"))]
-        //     { 0 } // Default for desktop testing
-        // };
+        let tool_id = unsafe { 
+            #[cfg(target_arch = "wasm32")]
+            { get_active_tool() }
+            #[cfg(not(target_arch = "wasm32"))]
+            { 0 } // Default for desktop testing
+        };
+        if previous_tool_id != tool_id {
+            match tool_id {
+                0 => {active_tool = Box::new(PlacementTool::new());},
+                1 => {active_tool = Box::new(PlacementTool::new());},
+                _ => {}
+            }
+        }
+        
         if should_reset == 1.0 {
             bodies = Vec::new();
 
@@ -68,79 +77,37 @@ async fn main() {
         // We use a simple O(N^2) loop to calculate gravity between all pairs
         tick_physics(&mut bodies, g_force, dt);
 
-        // let mut to_remove = Vec::new();
-
-        // for i in 0..bodies.len() {
-        //     for j in 0..bodies.len() {
-        //         if i == j { continue; }
-
-
-        //         let signal = if i < j {
-        //             let (left, right) = bodies.split_at_mut(j);
-        //             let b_i = &mut *left[i];
-        //             let b_j = &mut *right[0];
-        //             b_i.react_to_other(b_j, g_force, dt)
-        //         } else {
-        //             let (left, right) = bodies.split_at_mut(i);
-        //             let b_j = &mut *left[j];
-        //             let b_i = &mut *right[0];
-        //             b_i.react_to_other(b_j, g_force, dt)
-        //         };
-        //         if signal == 1 || signal == 3 {
-        //             to_remove.push(i);
-        //         }
-        //         if signal == 2 || signal == 3 {
-        //             to_remove.push(j);
-        //         }
-        //         // bodies[j] = to_delete.1
-        //     }
-        // }
-        // to_remove.sort();
-        // to_remove.dedup();
-        // for &idx in to_remove.iter().rev() {
-        //     if idx < bodies.len() {
-        //         bodies.remove(idx);
-        //     }
-        // }
-
         // --- Update and Draw ---
         for b in bodies.iter_mut() {
             b.update(dt);
-        
             b.draw();
         }
 
+        let mouse_pos = mouse_position().into();
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            drag_start = Some(mouse_position());
+            drag_start = Some(mouse_pos);
+            active_tool.on_click(mouse_pos, &mut bodies);
+        }
+
+        if is_mouse_button_down(MouseButton::Left) {
+            if let Some(start) = drag_start {
+                active_tool.on_drag(start, mouse_pos);
+            }
         }
 
         if is_mouse_button_released(MouseButton::Left) {
-            if let Some((sx, sy)) = drag_start {
-                let (ex, ey) = mouse_position();
-
-                // The velocity is the vector from where you started to where you released
-                // We multiply by a small factor (0.1) so it's not too fast
-                let initial_vel = vec2(sx - ex, sy - ey) * 0.5;
-
-                bodies.push(Box::new (Body {
-                    pos: vec2(sx, sy),
-                    vel: initial_vel,
-                    mass: spawning_mass
-                    // sign: g_sign
-                }));
+            if let Some(start) = drag_start {
+                active_tool.on_release(start, mouse_pos, &mut bodies, spawning_mass);
                 drag_start = None;
             }
         }
 
-        // Visual feedback: Draw a line while dragging
-        if let Some((sx, sy)) = drag_start {
-            let (ex, ey) = mouse_position();
-            draw_line(sx, sy, ex, ey, 2.0, WHITE);
+        // Drawing
+        if let Some(start) = drag_start {
+            active_tool.draw_preview(start, mouse_pos);
         }
 
-        // draw_text(&format!("FPS: {}", get_fps()), 20.0, 20.0, 20.0, GREEN);
-        // draw_text(&format!("g_s: {}", g_sign), 200.0, 20.0, 20.0, GREEN);
         next_frame().await
     }
 }
