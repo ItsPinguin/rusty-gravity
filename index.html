@@ -5,22 +5,26 @@
     <title>Gravity Sim</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script>
-        function setTab(tabName) {
-            console.log("Setting tab to", tabName)
-            document.querySelectorAll('[tabname]').forEach (elt =>{
-                const tab = elt.getAttribute("tabname")
-                elt.classList.toggle('hidden', tabName !== tab);
+        function setTab(tabButton) {
+            const tabName = tabButton.getAttribute('tab-button')
+            const tabGroup = tabButton.getAttribute('tab-group')
+            document.querySelectorAll('[tab-panel]').forEach (elt =>{
+                const group = elt.getAttribute('tab-group') || tabGroup
+                if (group === tabGroup) { 
+                    const tab = elt.getAttribute('tab-panel')
+                    elt.classList.toggle('hidden', tabName !== tab);    
+                }        
             })
 
             document.querySelectorAll('[tab-button]').forEach (button => {
-                const clicked = button.getAttribute('tab-button') === tabName;
-                button.classList.toggle('bg-stone-700', clicked);
-                button.classList.toggle('bg-stone-800', !clicked);
-                console.log(clicked, button)
+                const active = button.getAttribute('tab-button') === tabName && button.getAttribute('tab-group') === tabGroup;
+                button.classList.toggle('bg-stone-700', active);
+                button.classList.toggle('bg-stone-800', !active);
             })
-            // document.getElementById('panel-sim').classList.toggle('hidden', tabName !== 'sim');
-            // document.getElementById('panel-tools').classList.toggle('hidden', tabName !== 'tools');
-            // Update border colors for active tab...
+        }
+
+        function setTool(tool) {
+            window.tool = tool
         }
     </script>
     <style>
@@ -31,18 +35,23 @@
         <div class="p-2 z-10 h-full">
             <div class="z-10 bg-stone-900 rounded-xl border border-stone-700 text-stone-200  w-64 xl:w-72 h-full backdrop-blur-sm">
                 <div class="flex flex-row h-full">
+                    <!-- BUTTON CONTAINER -->
                     <div class="flex flex-col gap-2 border-r border-stone-700 p-2">
-                        <div onclick="setTab('tool1')" tab-button="tool1" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer
+                        <div onclick="setTab(this)" tab-group="tools" tab-button="move" 
+                        class="bg-stone-700 hover:bg-stone-700 size-8 rounded-md cursor-pointer
+                        flex items-center justify-center">
+                            x
+                        </div>
+                        <div onclick="setTab(this)" tab-group="tools" tab-button="add" 
+                        class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer
                         flex items-center justify-center">
                             +
                         </div>
-                        <div onclick="setTab('tool2')" tab-button="tool2" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer">
-                        </div>
-                        <div onclick="setTab('tool3')" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700/50 has-checked:bg-stone-700 w-8 h-8 rounded-md cursor-pointer">
-                        </div>
+                        <div onclick="setTab(this)" tab-group="tools" tab-button="tool3" class="bg-stone-800 hover:bg-stone-700 size-8 rounded-md cursor-pointer"></div>
                     </div>
+                    <!-- TOOLS CONTAINER -->
                     <div class="w-full">
-                        <details class="mb-2 cursor-pointer w-full hidden" open tabname="tool1">
+                        <details class="mb-2 cursor-pointer w-full hidden" open tab-group="tools" tab-panel="add">
                             <summary class="flex items-center mb-2">
                                 <div class="flex-grow border-t border-stone-700"></div>
                             
@@ -58,6 +67,7 @@
                                 <input type="number" id="mRange" min="-1000" max="1000" value="10" class="accent-blue-500 text-sm bg-blue-900/50 rounded-sm px-1 w-16">
                             </div>
                         </details>
+                        <div class="" tab-group="tools" tab-panel="move">MOVE AROUND</div>
                     </div>
                 </div>
 
@@ -131,10 +141,9 @@
                     }
                     return 0.0;
                 };
-                // importObject.env.get_gravity_sign = function () {
-                //     const val = (document.getElementById("gSignBox").checked);
-                //     return isNaN(val) ? 1.0 : val ? 1.0 : -1.0;
-                // };
+                importObject.env.get_active_tool = function () { 
+                    return window.tool || 'move'
+                }
             }
         });
         function requestReset() { window.resetRequested = true; }
