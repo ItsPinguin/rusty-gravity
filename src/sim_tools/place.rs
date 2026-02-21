@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use crate::particles::{Particle, Body};
 use crate::sim_tools::Tool;
-use crate::ViewState;
+use crate::app_state::ViewState;
 
 pub struct PlaceTool;
 

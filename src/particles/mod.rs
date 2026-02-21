@@ -1,4 +1,4 @@
-use crate::{Vec2, ViewState};
+use crate::{Vec2, app_state::ViewState};
 
 pub trait Particle {
     fn get_type(&self) -> &str; // Changed to &self (no need for &mut)

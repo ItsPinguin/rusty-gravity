@@ -118,8 +118,3 @@ async fn main() {
         next_frame().await
     }
 }
-
-pub struct ViewState {
-    pub offset: Vec2,
-    pub zoom: f32,
-}

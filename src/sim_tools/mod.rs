@@ -1,6 +1,6 @@
 use macroquad::prelude::*;
 use crate::particles::{Particle, Body};
-use crate::ViewState;
+use crate::app_state::ViewState;
 
 pub trait Tool {
     fn on_click(&mut self, pos: Vec2, bodies: &mut Vec<Box<dyn Particle>>, view: &mut ViewState);

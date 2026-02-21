@@ -1,7 +1,6 @@
 use macroquad::prelude::*;
 use crate::particles::{Particle};
 use crate::sim_tools::{Tool, PanTool};
-use crate::ViewState;
 
 pub struct AppState {
     pub bodies : Vec<Box<dyn Particle>>,
@@ -24,4 +23,9 @@ impl AppState {
             drag_start: None
         }
     }
+}
+
+pub struct ViewState {
+    pub offset: Vec2,
+    pub zoom: f32,
 }

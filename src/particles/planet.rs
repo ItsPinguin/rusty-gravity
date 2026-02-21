@@ -1,4 +1,4 @@
-use crate::{Vec2, ViewState};
+use crate::{Vec2, app_state::ViewState};
 use macroquad::prelude::*;
 use crate::particles::Particle;
 
